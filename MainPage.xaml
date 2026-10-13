@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Repro38612"
+             xmlns:controls="clr-namespace:Repro38612.Controls"
+             xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
+             x:Class="Repro38612.MainPage"
+             Title="Naprave"
+             BackgroundColor="White">
+
+    <ContentPage.Resources>
+        <local:NullToBoolConverter x:Key="NullToBool" />
+
+        <local:ControlTemplateSelector x:Key="ControlSelector">
+            <local:ControlTemplateSelector.CardTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="WhiteSmoke" Padding="12" Stroke="LightGray">
+                        <Border.Shadow><Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.3" /></Border.Shadow>
+                        <VerticalStackLayout>
+                            <Label Text="{Binding Name}" TextColor="Black" />
+                            <Label Text="{Binding Reading}" TextColor="Gray" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </local:ControlTemplateSelector.CardTemplate>
+            <local:ControlTemplateSelector.CameraTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 12" BackgroundColor="WhiteSmoke" Padding="12" Stroke="LightGray">
+                        <Border.Shadow><Shadow Brush="Black" Offset="0,2" Radius="6" Opacity="0.3" /></Border.Shadow>
+                        <VerticalStackLayout>
+                            <Label Text="{Binding Name}" TextColor="Black" />
+                            <skia:SKCanvasView HeightRequest="160" PaintSurface="OnCameraPaintSurface" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </local:ControlTemplateSelector.CameraTemplate>
+        </local:ControlTemplateSelector>
+
+        <local:RowTemplateSelector x:Key="DeviceRowSelector">
+            <local:RowTemplateSelector.HeaderTemplate>
+                <DataTemplate>
+                    <Label Text="{Binding HeaderText}" FontAttributes="Bold" Margin="12,12,12,4" TextColor="Black" />
+                </DataTemplate>
+            </local:RowTemplateSelector.HeaderTemplate>
+
+            <local:RowTemplateSelector.PairTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="*,*" Padding="4">
+                        <controls:TemplateHost Grid.Column="0" Margin="4"
+                                               HostContent="{Binding Left}"
+                                               TemplateSelector="{StaticResource ControlSelector}" />
+                        <!-- Če to zakomentiramo, naj bi delalo (diskusija #35580) -->
+                        <controls:TemplateHost Grid.Column="1" Margin="4"
+                                               HostContent="{Binding Right}"
+                                               IsVisible="{Binding Right, Converter={StaticResource NullToBool}}"
+                                               TemplateSelector="{StaticResource ControlSelector}" />
+                    </Grid>
+                </DataTemplate>
+            </local:RowTemplateSelector.PairTemplate>
+
+            <local:RowTemplateSelector.FullTemplate>
+                <DataTemplate>
+                    <Grid Padding="4">
+                        <controls:TemplateHost Margin="4"
+                                               HostContent="{Binding Left}"
+                                               TemplateSelector="{StaticResource ControlSelector}" />
+                    </Grid>
+                </DataTemplate>
+            </local:RowTemplateSelector.FullTemplate>
+        </local:RowTemplateSelector>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <HorizontalStackLayout Spacing="8" Padding="8">
+            <Button Text="{Binding ChaosText}" Clicked="OnChaosClicked" />
+            <Button Text="Hog 20 s" Clicked="OnHogClicked" />
+            <Button Text="Toggle" Command="{Binding ToggleCommand}" />
+            <Button Text="Rebuild" Command="{Binding RebuildCommand}" />
+        </HorizontalStackLayout>
+
+        <RefreshView Grid.Row="1"
+                     IsVisible="{Binding IsListVisible}"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshCommand}">
+            <CollectionView x:Name="listControlsItems"
+                            IsVisible="{Binding IsListVisible}"
+                            BackgroundColor="White"
+                            ItemSizingStrategy="MeasureAllItems"
+                            Scrolled="ListControlsItems_Scrolled"
+                            SelectionMode="None"
+                            VerticalScrollBarVisibility="Always"
+                            IsGrouped="False"
+                            ItemsSource="{Binding Devices.Rows}"
+                            ItemTemplate="{StaticResource DeviceRowSelector}" />
+        </RefreshView>
+    </Grid>
+</ContentPage>
